@@ -31,7 +31,7 @@ merge-manifests:
     name: mplatform/manifest-tool:alpine
     entrypoint: [ "" ]
   variables:
-    PLATFORMS: amd64 arm64 s390x
+    PLATFORMS: linux/amd64,linux/arm,linux/arm64,linux/s390x
   script:
     - image_target=$(echo $CI_COMMIT_BRANCH | sed "s/registry.k8s.io/$DOCKER_USERNAME/" | sed 's/\//\-/2' | sed 's/\//:/2')
     - echo $image_target
