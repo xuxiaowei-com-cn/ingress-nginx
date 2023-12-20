@@ -38,4 +38,4 @@ merge-manifests:
     - manifest-tool --help
     - manifest-tool push --help
     - manifest-tool push from-args --help
-    - manifest-tool --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD push from-args --platforms $PLATFORMS --template "$image_target"-ARCH --target "$image_target" --ignore-missing || echo "无法合并 $image_target-ARCH"
+    - manifest-tool --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD push from-args --platforms $PLATFORMS --template "$image_target"-ARCH --target "$image_target" --ignore-missing
