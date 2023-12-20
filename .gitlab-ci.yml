@@ -1,0 +1,41 @@
+stages:
+  - docker-build
+  - merge-manifests
+
+docker-build:
+  stage: docker-build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    PLATFORMS: amd64 arm64 s390x
+  before_script:
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+  script:
+    - image_source=$(echo $CI_COMMIT_BRANCH | sed 's/\//:/3')
+    - echo $image_source
+    - image_target=$(echo $CI_COMMIT_BRANCH | sed "s/registry.k8s.io/$DOCKER_USERNAME/" | sed 's/\//\-/2' | sed 's/\//:/2')
+    - echo $image_target
+    - |
+      for platform in $PLATFORMS; do
+        docker pull --platform=linux/$platform $image_source && docker tag $image_source $image_target-$platform || echo "不存在：$image_source";
+        docker push $image_target-$platform || echo "不存在：$image_target-$platform";
+      done
+
+merge-manifests:
+  stage: merge-manifests
+  needs:
+    - job: docker-build
+      artifacts: true
+  image:
+    name: mplatform/manifest-tool:alpine
+    entrypoint: [ "" ]
+  variables:
+    PLATFORMS: amd64 arm64 s390x
+  script:
+    - image_target=$(echo $CI_COMMIT_BRANCH | sed "s/registry.k8s.io/$DOCKER_USERNAME/" | sed 's/\//\-/2' | sed 's/\//:/2')
+    - echo $image_target
+    - manifest-tool --help
+    - manifest-tool push --help
+    - manifest-tool push from-args --help
+    - manifest-tool --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD push from-args --platforms $PLATFORMS --template $image_target-ARCH --target $image_target --ignore-missing || echo "无法合并 $image_target-ARCH"
